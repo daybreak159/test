@@ -319,7 +319,34 @@ python -m jittor_controller_repro.plot_logs \
 
 在线训练中 Executor 和 Designer 涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不应被解读为逐点严格一致。这里重点验证的是：真实 LoCoMo 输入可以经过技能选择、记忆更新、reward 计算和 PPO 更新，形成完整训练闭环。
 
-### 9.2 离线缓存：固定 trace 下的训练对齐
+### 9.2 conv-49 / QA20 小规模 QA 评估
+
+为了验证训练后构建出的 MemoryBank 是否能够进入下游问答流程，我们在同一条 LoCoMo 测试 trace 上进行了一个小规模 QA 评估：
+
+```text
+测试样本: conv-49
+问题数量: 前 20 个 QA
+评估方式: 复用各自已构建的 conv-49 MemoryBank，再进行 QA answer + LLM judge
+Judge 模型: gpt-5.5
+```
+
+结果如下：
+
+| Backend | checkpoint | MemoryBank 条数 | F1 | LLM Judge |
+|---|---|---:|---:|---:|
+| Jittor | `locomo-jittor-full-small-designer-epochwise_epoch_final.pt` | 83 | 0.5332 | 0.6750 |
+| PyTorch | `locomo-torch-full-small-designer-epochwise_epoch_final.pt` | 180 | 0.6051 | 0.8000 |
+
+这组结果说明 Jittor checkpoint 可以完成从 MemoryBank 构建到 QA 评估的完整推理链路，但它不是严格的同 SkillBank 对齐测试。原因是 Executor 和 Designer 仍由在线 LLM 驱动，两次训练结束时 Designer 演化出的 skill 不同：
+
+| Backend | Designer 生成的新 skill | 影响 |
+|---|---|---|
+| Jittor | `capture_participation_event` | 更偏向捕捉参与活动、演讲、志愿、公开出现等事件 |
+| PyTorch | `capture_visual_details` | 更偏向捕捉照片、物体、场景等视觉细节 |
+
+因此，测试阶段 Executor 接收到的 skill prompt 并不完全相同，最终 MemoryBank 条数和 QA 分数会受到不同 Designer 产物的影响。这里的结论应理解为：Jittor 版本能够接入完整推理与 QA 评估流程，并取得有效结果；但上述 QA 分数不用于声称 Jittor 与 PyTorch 在最终测试集上严格等价。
+
+### 9.3 离线缓存：固定 trace 下的训练对齐
 
 下图使用相同 cached trace 分别训练 PyTorch 与 Jittor Controller。相比在线流程，离线缓存更适合展示 loss 下降趋势和后端对齐情况。
 
@@ -406,5 +433,6 @@ Controller-only Jittor 相对速度：
 
 - 当前实验使用 LoCoMo 小规模设置，受 API 成本和显存限制，没有复现论文最终大规模指标；
 - 在线训练结果会受到 LLM 输出、API 延迟和采样随机性的影响；
+- Designer 在线演化出的 skill 可能不同，例如本次 Jittor 生成 `capture_participation_event`，PyTorch 生成 `capture_visual_details`，因此完整流程 QA 分数不应被解读为严格同 SkillBank 对齐结果；
 - 端到端加速并不明显，性能优势主要体现在 Controller 局部计算；
 - README 中的曲线和日志用于说明功能对齐、训练信号和性能趋势，不应解读为 Jittor 版本全面优于 PyTorch。
