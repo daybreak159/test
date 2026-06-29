@@ -76,23 +76,22 @@ PyTorch CUDA 环境，用于原版 baseline 对齐
 OpenAI-compatible API，用于在线 Executor / Designer / QA 评估
 ```
 
-本地 Jittor GPU 实验环境：
+参考环境：
 
 ```text
-Python: /home/wsy/jittor_envs/stage3-jittor/bin/python
+Python: 3.10+
 Jittor: 1.3.11.0
-GPU: NVIDIA GeForce RTX 4070 Laptop GPU
-Compiler: gcc/g++ 12
-Jittor cache_name: gpu_gcc12
+GPU: CUDA-capable NVIDIA GPU
+Compiler: gcc/g++ version compatible with the installed CUDA toolkit
 ```
 
-CUDA 12.2 与系统 gcc/g++ 13 可能不匹配，因此训练脚本中显式指定 gcc/g++ 12：
+如果 Jittor 首次编译 CUDA kernel 时提示 `nvcc` 与系统 `gcc/g++` 版本不匹配，请安装与当前 CUDA 版本兼容的编译器，并在运行前显式指定编译器路径。例如：
 
 ```bash
-export CC=/home/wsy/local/gcc12/usr/bin/gcc-12
-export CXX=/home/wsy/local/gcc12/usr/bin/g++-12
-export cc_path=/home/wsy/local/gcc12/usr/bin/g++-12
-export cache_name=gpu_gcc12
+export CC=/path/to/compatible/gcc
+export CXX=/path/to/compatible/g++
+export cc_path=/path/to/compatible/g++
+export cache_name=jittor_gpu_cache
 export DISABLE_MULTIPROCESSING=1
 ```
 
@@ -115,7 +114,7 @@ MEMSKILL_API_KEY=<api-key>
 
 不要提交真实 API Key。
 
-为了减少网络依赖，实验默认使用本地 HuggingFace 缓存的 Qwen embedding，并开启离线模式：
+如果已经提前下载好 embedding 模型，可以开启 HuggingFace / Transformers 离线模式，减少训练时的网络依赖：
 
 ```bash
 export HF_HUB_OFFLINE=1
