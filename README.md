@@ -208,6 +208,14 @@ jittor_controller_repro/runs/locomo_torch_full_small_designer_epochwise/
 
 训练完成后，主要日志、曲线和行为分布会保存到对应 `runs/` 目录中，例如 `metrics.csv`、`metrics.jsonl`、`train.log`、`value_loss_curve.png`、`policy_loss_curve.png`、`selected_skill_stats.png` 和 `memory_action_stats.png`。
 
+README 中的图表可以用已保存的日志重新生成：
+
+```bash
+python scripts/generate_readme_figures.py \
+  --runs-root jittor_controller_repro/runs \
+  --out-dir assets/figures
+```
+
 ## 7. 测试脚本
 
 单元测试：
@@ -272,52 +280,70 @@ python -m jittor_controller_repro.plot_logs \
   --output jittor_controller_repro/runs/total_loss_curve.png
 ```
 
-## 9. 训练曲线与结果展示
+## 9. 训练曲线与对齐结果
 
-### 9.1 PyTorch / Jittor 离线 loss 对齐
+本仓库同时保留两类实验图：
 
-下图展示固定离线 trace 上的 total loss 曲线。它用于说明在去除 API 和 LLM 随机性后，Jittor Controller 与 PyTorch 原版 Controller 可以产生相近的训练趋势。
+- **在线流程图**：来自真实 MemSkill 链路，包含 Controller、Executor、reward、PPO 更新和 Designer evolution，用于说明 Jittor Controller 已经接入完整训练闭环；
+- **离线缓存图**：使用固定 cached trace，不重新调用 LLM API，用于减少随机性，更稳定地比较 PyTorch / Jittor 的训练趋势。
 
-![offline total loss](assets/figures/offline_total_loss_curve.png)
+### 9.1 在线流程：完整闭环可运行
 
-### 9.2 Jittor 在线训练曲线
+下图分别展示一轮小规模在线训练中的 reward、Value Loss 和 Policy Loss。两种后端都完成了 5 个 inner epoch，并产生了 PPO 训练信号。
 
-在线训练曲线用于展示 Jittor Controller 已经接入真实 MemSkill 流程，并能够产生 PPO 训练信号。
+在线 Reward 曲线：
 
-Value Loss：
+![online reward curve](assets/figures/online_reward_curve.png)
 
-![online value loss](assets/figures/online_jittor_value_loss_curve.png)
+在线 Value Loss 曲线：
 
-Policy Loss：
+![online value loss curve](assets/figures/online_value_loss_curve.png)
 
-![online policy loss](assets/figures/online_jittor_policy_loss_curve.png)
+在线 Policy Loss 曲线：
 
-需要说明的是，在线训练中 Executor 和 Designer 都涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不会与 PyTorch 逐点完全一致。这里重点验证的是训练流程可运行、指标数量级合理、PPO 更新信号正常。
+![online policy loss curve](assets/figures/online_policy_loss_curve.png)
 
-### 9.3 技能选择与记忆操作分布
+在线流程的汇总记录如下：
 
-Controller 选择的 skill 分布：
+![online alignment summary](assets/figures/online_alignment_summary.png)
 
-![selected skill stats](assets/figures/selected_skill_stats.png)
+在线训练中 Executor 和 Designer 涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不应被解读为逐点严格一致。这里重点验证的是：真实 LoCoMo 输入可以经过技能选择、记忆更新、reward 计算和 PPO 更新，形成完整训练闭环。
 
-Executor 最终执行的 memory action 分布：
+### 9.2 离线缓存：固定 trace 下的训练对齐
 
-![memory action stats](assets/figures/memory_action_stats.png)
+下图使用相同 cached trace 分别训练 PyTorch 与 Jittor Controller。相比在线流程，离线缓存更适合展示 loss 下降趋势和后端对齐情况。
 
-这些图用于说明 Jittor Controller 没有坍缩到单一技能，而是能够在真实在线流程中调用多种候选 skill，并驱动原 Executor 生成有效 memory actions。
+离线 Value Loss 曲线：
 
-## 10. 在线训练指标示例
+![offline value loss curve](assets/figures/offline_value_loss_curve.png)
 
-| backend | step | reward | policy_loss | value_loss | entropy | num_steps |
-|---|---:|---:|---:|---:|---:|---:|
-| PyTorch | 0 | 0.229167 | -0.000253 | 0.004511 | 1.386294 | 19 |
-| PyTorch | 1 | 0.309524 | -0.000064 | 0.008984 | 1.386294 | 19 |
-| PyTorch | 2 | 0.241071 | -0.000044 | 0.003785 | 1.386293 | 19 |
-| Jittor | 0 | 0.205357 | -0.000105 | 0.003178 | 1.386295 | 19 |
-| Jittor | 1 | 0.142857 | -0.000154 | 0.000934 | 1.386294 | 19 |
-| Jittor | 2 | 0.238095 | -0.000028 | 0.004407 | 1.386294 | 19 |
+离线 Policy Loss 曲线：
 
-这些数据说明两种实现都完成了在线 rollout、reward 回传、PPO loss 计算和 Controller 更新。由于在线过程包含 LLM 输出和采样随机性，本表不用于证明严格数值相等，而用于展示功能对齐和训练信号正常。
+![offline policy loss curve](assets/figures/offline_policy_loss_curve.png)
+
+离线 PPO 总目标曲线：
+
+![offline ppo objective loss curve](assets/figures/offline_ppo_objective_loss_curve.png)
+
+离线缓存的最终指标如下：
+
+![offline alignment summary](assets/figures/offline_alignment_summary.png)
+
+这组结果说明：在固定输入轨迹下，Jittor Controller 的 Value Loss、Policy Loss 和 Value 拟合度与 PyTorch baseline 保持同量级，并呈现相近的训练变化趋势。
+
+## 10. 行为分布可视化
+
+行为分布图使用 cached trace 记录生成，不重新调用 LLM API。它用于观察 Controller 是否只选择单一 skill，以及 Executor 是否能产生多类 memory actions。
+
+Controller 技能选择分布：
+
+![offline selected skill distribution](assets/figures/offline_selected_skill_distribution.png)
+
+Executor memory action 分布：
+
+![offline memory action distribution](assets/figures/offline_memory_action_distribution.png)
+
+可以看到，Controller 会在基础技能和 Designer 产生的新技能之间进行选择；Executor 输出仍以 insert / update 为主，少量出现 delete / noop，符合 MemoryBank 构建任务的常见操作分布。
 
 ## 11. Controller-only 性能测试
 
@@ -345,6 +371,16 @@ python -m jittor_controller_repro.controller_benchmark
 | epoch_sec_mean | 0.370885 | 0.307038 | 0.828 | 1.208x |
 
 ### 11.2 Real LoCoMo Cached Trace
+
+下图展示真实 LoCoMo cached trace 上的 Controller-only benchmark。第一张图比较各阶段耗时，第二张图展示 `PyTorch / Jittor` speedup。
+
+Controller-only 分阶段耗时：
+
+![controller benchmark timing](assets/figures/controller_benchmark_timing.png)
+
+Controller-only Jittor 相对速度：
+
+![controller benchmark speedup](assets/figures/controller_benchmark_speedup.png)
 
 | Metric | PyTorch | Jittor | Jittor / PyTorch | Speedup |
 |---|---:|---:|---:|---:|
