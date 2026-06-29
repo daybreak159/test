@@ -1,34 +1,35 @@
 # MemSkillJittor
 
-Jittor reproduction of the trainable Controller module in **MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents**.
+本仓库用于新芽计划第三阶段汇报：基于 **Jittor** 复现论文 **MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents** 中的可训练 Controller 模块，并将其接回原 MemSkill 的在线记忆构建流程。
 
-This repository is prepared for the Jittor reproduction stage of the 新芽计划 report. The reproduction focuses on the neural and PPO-based part of MemSkill: the Controller. The LLM-driven Executor and Designer remain compatible with the original MemSkill pipeline.
+> 说明：本仓库重点复现的是 Controller 的神经网络与 PPO 训练路径。Executor 和 Designer 主要由 LLM 驱动，因此保留原 MemSkill 实现，通过 bridge 与 Jittor Controller 对接。
 
-## 1. Reproduction Scope
+## 1. 复现范围
 
-MemSkill contains three major modules:
+MemSkill 整体包含三个核心模块：
 
-| Module | Role in MemSkill | Jittor reproduction status |
+| 模块 | 原论文中的作用 | 本仓库复现情况 |
 |---|---|---|
-| Controller | Selects Top-K memory skills and learns the policy with PPO | Reimplemented in Jittor |
-| Executor | Uses LLM calls to generate memory actions and update MemoryBank | Reused from original MemSkill |
-| Designer | Uses LLM feedback analysis to refine or propose skills | Reused from original MemSkill |
+| Controller | 根据当前状态从 SkillBank 中选择 Top-K memory skills，并通过 PPO 学习选择策略 | 使用 Jittor 复现 |
+| Executor | 根据选中的 skills 调用 LLM 生成 memory actions，并更新 MemoryBank | 沿用原实现 |
+| Designer | 根据失败案例调用 LLM 分析并调整 SkillBank | 沿用原实现 |
 
-The Jittor implementation covers:
+Jittor 版本实现内容包括：
 
-- state encoding network
-- skill encoding network
-- actor scoring network
-- critic value network
-- dynamic SkillBank padding and masks
-- Top-K skill action sampling
-- joint probability recomputation for selected Top-K skills
+- 状态编码网络
+- 技能编码网络
+- 策略打分网络
+- 价值估计网络
+- 动态 SkillBank 的 padding 与 mask
+- Top-K skill action 采样
+- Top-K 动作联合概率重算
 - PPO clipped loss
-- value loss and entropy term
-- optimizer update and checkpoint saving
-- bridge back to the original MemSkill online training flow
+- value loss 与 entropy 项
+- Jittor optimizer 更新
+- checkpoint 保存
+- 与原 MemSkill 在线训练流程的 bridge 接入
 
-## 2. Repository Structure
+## 2. 目录结构
 
 ```text
 MemskillJittor/
@@ -57,24 +58,25 @@ MemskillJittor/
 │   ├── run_jittor_locomo_next_outer_epoch.sh
 │   ├── run_torch_locomo_full_small_designer.sh
 │   └── run_torch_locomo_next_outer_epoch.sh
-└── data/
-    ├── locomo10.json
-    └── locomo10_one.json
+├── data/
+│   ├── locomo10.json
+│   └── locomo10_one.json
+└── assets/
+    └── figures/
 ```
 
-## 3. Environment Setup
+## 3. 环境配置
 
-### 3.1 Python Environment
+推荐环境：
 
-Recommended:
-
-```bash
-python >= 3.10
-jittor >= 1.3.11
-torch with CUDA support for PyTorch baseline
+```text
+Python >= 3.10
+Jittor >= 1.3.11
+PyTorch CUDA 环境，用于原版 baseline 对齐
+OpenAI-compatible API，用于在线 Executor / Designer / QA 评估
 ```
 
-The local Jittor GPU environment used in this reproduction:
+本地 Jittor GPU 实验环境：
 
 ```text
 Python: /home/wsy/jittor_envs/stage3-jittor/bin/python
@@ -84,7 +86,7 @@ Compiler: gcc/g++ 12
 Jittor cache_name: gpu_gcc12
 ```
 
-CUDA 12.2 may fail with system gcc/g++ 13. The training scripts therefore use gcc/g++ 12:
+CUDA 12.2 与系统 gcc/g++ 13 可能不匹配，因此训练脚本中显式指定 gcc/g++ 12：
 
 ```bash
 export CC=/home/wsy/local/gcc12/usr/bin/gcc-12
@@ -94,15 +96,15 @@ export cache_name=gpu_gcc12
 export DISABLE_MULTIPROCESSING=1
 ```
 
-For CPU-only smoke tests:
+如果只做 CPU smoke test，可以关闭 nvcc：
 
 ```bash
 export nvcc_path=''
 ```
 
-### 3.2 API and Embedding Settings
+## 4. API 与本地模型缓存
 
-Online MemSkill training requires an OpenAI-compatible API configuration:
+在线 MemSkill 流程需要 LLM API。请在本地 `.env` 或脚本环境变量中配置：
 
 ```bash
 MEMSKILL_MODEL=<chat-model-name>
@@ -111,51 +113,51 @@ MEMSKILL_API_BASE=<openai-compatible-base-url>
 MEMSKILL_API_KEY=<api-key>
 ```
 
-Do not commit real API keys.
+不要提交真实 API Key。
 
-To avoid repeated network downloads, the experiment uses local HuggingFace cache for Qwen embedding:
+为了减少网络依赖，实验默认使用本地 HuggingFace 缓存的 Qwen embedding，并开启离线模式：
 
 ```bash
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
+export WANDB_MODE=offline
 ```
 
-## 4. Data Preparation
+## 5. 数据准备
 
-The small-scale online experiments use LoCoMo data:
+小规模在线训练使用 LoCoMo 数据：
 
 ```text
 data/locomo10.json
 data/locomo10_one.json
 ```
 
-`locomo10_one.json` is used for quick smoke tests. `locomo10.json` is used for small-scale full-flow comparison.
+其中：
 
-The purpose of the small-scale setting is to verify:
+- `locomo10_one.json` 用于快速调试；
+- `locomo10.json` 用于小规模完整流程训练。
 
-- the Jittor Controller can run inside the real MemSkill online pipeline
-- PPO training signals are generated correctly
-- Jittor and PyTorch produce comparable logs and behavior distributions
+本项目受 API 调用成本和显存限制，目标是验证 Jittor Controller 可以跑通完整训练闭环，并与 PyTorch 原流程在训练记录和行为分布上保持相近，而不是复现论文最终大规模指标。
 
-It is not intended to reproduce the final large-scale paper metrics.
+## 6. 训练脚本
 
-## 5. Training Scripts
-
-### 5.1 Jittor One-Batch Debug
+### 6.1 Jittor one-batch debug
 
 ```bash
 ./scripts/run_jittor_one_batch_debug.sh
 ```
 
-Main output:
+输出目录：
 
 ```text
 jittor_controller_repro/runs/locomo_jittor_one_batch_debug/
 ```
 
-This verifies that the Jittor Controller can consume real state/skill embeddings, select Top-K skills, and return PPO update records.
+这个脚本用于快速验证 Jittor Controller 是否能够接入原 MemSkill 边界，消费真实 state / skill embedding，输出 Top-K skills，并产生 PPO 更新记录。
 
-### 5.2 Jittor Full Small-Scale Online Training
+### 6.2 Jittor 完整小规模训练
+
+为了避免长时间运行中断，完整训练按 outer epoch 分轮执行：
 
 ```bash
 ./scripts/run_jittor_locomo_next_outer_epoch.sh 1
@@ -163,19 +165,19 @@ This verifies that the Jittor Controller can consume real state/skill embeddings
 ./scripts/run_jittor_locomo_next_outer_epoch.sh 3
 ```
 
-Underlying script:
+底层脚本：
 
 ```bash
 ./scripts/run_jittor_locomo_full_small_designer.sh
 ```
 
-Main output:
+输出目录：
 
 ```text
 jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/
 ```
 
-Important artifacts:
+主要输出：
 
 ```text
 train_epoch_1.log
@@ -193,7 +195,9 @@ memory_action_stats.png
 training_summary.md
 ```
 
-### 5.3 PyTorch Baseline Training
+### 6.3 PyTorch 原版对齐训练
+
+PyTorch baseline 使用原版 Controller，并尽量保持与 Jittor 版本一致的小规模设置：
 
 ```bash
 ./scripts/run_torch_locomo_next_outer_epoch.sh 1
@@ -201,51 +205,49 @@ training_summary.md
 ./scripts/run_torch_locomo_next_outer_epoch.sh 3
 ```
 
-Underlying script:
+底层脚本：
 
 ```bash
 ./scripts/run_torch_locomo_full_small_designer.sh
 ```
 
-Main output:
+输出目录：
 
 ```text
 jittor_controller_repro/runs/locomo_torch_full_small_designer_epochwise/
 ```
 
-The PyTorch run uses the original Controller logic and the same small-scale LoCoMo setting, so that the Jittor logs can be compared with the original implementation.
+## 7. 测试脚本
 
-## 6. Testing Scripts
-
-Unit tests:
+单元测试：
 
 ```bash
 pytest jittor_controller_repro/tests
 ```
 
-Bridge smoke test:
+Bridge smoke test：
 
 ```bash
 python -m jittor_controller_repro.test_bridges
 ```
 
-Top-K log probability test:
+Top-K 联合概率测试：
 
 ```bash
 pytest jittor_controller_repro/tests/test_topk_logprob.py
 ```
 
-Jittor Controller forward test:
+Jittor Controller forward 测试：
 
 ```bash
 pytest jittor_controller_repro/tests/test_jittor_controller_forward.py
 ```
 
-## 7. Offline Controller Training
+## 8. 离线 Controller 训练
 
-The offline trace path is used to remove LLM/API randomness and compare Controller behavior on fixed cached data.
+在线训练会受到 API、LLM 输出和采样随机性的影响。为了更稳定地比较 PyTorch 与 Jittor Controller，可以将轨迹缓存为固定 `.npz`，再分别运行两种后端。
 
-Synthetic trace generation:
+生成合成 trace：
 
 ```bash
 python -m jittor_controller_repro.data.synthetic_generator \
@@ -257,7 +259,7 @@ python -m jittor_controller_repro.data.synthetic_generator \
   --seed 42
 ```
 
-Train PyTorch and Jittor on the same trace:
+分别训练 PyTorch 与 Jittor：
 
 ```bash
 python -m jittor_controller_repro.train_torch \
@@ -269,7 +271,7 @@ python -m jittor_controller_repro.train_jittor \
   --log jittor_controller_repro/runs/jittor_train.jsonl
 ```
 
-Plot loss curves:
+绘制 loss 曲线：
 
 ```bash
 python -m jittor_controller_repro.plot_logs \
@@ -279,22 +281,41 @@ python -m jittor_controller_repro.plot_logs \
   --output jittor_controller_repro/runs/total_loss_curve.png
 ```
 
-## 8. Training Logs and Curves
+## 9. 训练曲线与结果展示
 
-### 8.1 Online Small-Scale Training Curves
+### 9.1 PyTorch / Jittor 离线 loss 对齐
 
-The following files record online training curves:
+下图展示固定离线 trace 上的 total loss 曲线。它用于说明在去除 API 和 LLM 随机性后，Jittor Controller 与 PyTorch 原版 Controller 可以产生相近的训练趋势。
 
-```text
-jittor_controller_repro/runs/online_reward_curve.png
-jittor_controller_repro/runs/online_policy_loss_curve.png
-jittor_controller_repro/runs/online_value_loss_curve.png
-jittor_controller_repro/runs/online_entropy_curve.png
-```
+![offline total loss](assets/figures/offline_total_loss_curve.png)
 
-These curves are used to verify that both PyTorch and Jittor complete online rollout, reward feedback, PPO loss computation, and Controller update.
+### 9.2 Jittor 在线训练曲线
 
-### 8.2 Example Online Metrics
+在线训练曲线用于展示 Jittor Controller 已经接入真实 MemSkill 流程，并能够产生 PPO 训练信号。
+
+Value Loss：
+
+![online value loss](assets/figures/online_jittor_value_loss_curve.png)
+
+Policy Loss：
+
+![online policy loss](assets/figures/online_jittor_policy_loss_curve.png)
+
+需要说明的是，在线训练中 Executor 和 Designer 都涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不会与 PyTorch 逐点完全一致。这里重点验证的是训练流程可运行、指标数量级合理、PPO 更新信号正常。
+
+### 9.3 技能选择与记忆操作分布
+
+Controller 选择的 skill 分布：
+
+![selected skill stats](assets/figures/selected_skill_stats.png)
+
+Executor 最终执行的 memory action 分布：
+
+![memory action stats](assets/figures/memory_action_stats.png)
+
+这些图用于说明 Jittor Controller 没有坍缩到单一技能，而是能够在真实在线流程中调用多种候选 skill，并驱动原 Executor 生成有效 memory actions。
+
+## 10. 在线训练指标示例
 
 | backend | step | reward | policy_loss | value_loss | entropy | num_steps |
 |---|---:|---:|---:|---:|---:|---:|
@@ -305,38 +326,24 @@ These curves are used to verify that both PyTorch and Jittor complete online rol
 | Jittor | 1 | 0.142857 | -0.000154 | 0.000934 | 1.386294 | 19 |
 | Jittor | 2 | 0.238095 | -0.000028 | 0.004407 | 1.386294 | 19 |
 
-Because online Executor and Designer depend on LLM calls, exact action counts and rewards are not expected to be identical. The goal is to verify comparable training signal ranges and successful integration into the full MemSkill loop.
+这些数据说明两种实现都完成了在线 rollout、reward 回传、PPO loss 计算和 Controller 更新。由于在线过程包含 LLM 输出和采样随机性，本表不用于证明严格数值相等，而用于展示功能对齐和训练信号正常。
 
-### 8.3 Behavior Distribution Artifacts
+## 11. Controller-only 性能测试
 
-```text
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/selected_skill_stats.png
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/memory_action_stats.png
-```
-
-These figures record:
-
-- Controller selected skill distribution
-- Executor memory action distribution
-
-They are used to show that the Jittor Controller does not collapse to one action type and can drive the original Executor to produce valid memory updates.
-
-## 9. Controller-Only Benchmark
-
-End-to-end MemSkill training includes LLM API, retrieval, Executor and QA evaluation, so it does not directly reflect the Controller module speed. The controller-only benchmark freezes the trace and compares:
+端到端 MemSkill 训练包含 LLM API、Retriever、Executor 和 QA 评估，无法直接体现 Controller 模块迁移后的性能。因此我们额外做了 Controller-only benchmark，只比较：
 
 - forward / select_action
 - evaluate_actions
 - compute_ppo_loss
 - optimizer step
 
-Run:
+运行：
 
 ```bash
 python -m jittor_controller_repro.controller_benchmark
 ```
 
-### 9.1 Synthetic Trace Result
+### 11.1 Synthetic Trace
 
 | Metric | PyTorch | Jittor | Jittor / PyTorch | Speedup |
 |---|---:|---:|---:|---:|
@@ -346,7 +353,7 @@ python -m jittor_controller_repro.controller_benchmark
 | train_step_sec_mean | 0.024638 | 0.020121 | 0.817 | 1.224x |
 | epoch_sec_mean | 0.370885 | 0.307038 | 0.828 | 1.208x |
 
-### 9.2 Real LoCoMo Cached Trace Result
+### 11.2 Real LoCoMo Cached Trace
 
 | Metric | PyTorch | Jittor | Jittor / PyTorch | Speedup |
 |---|---:|---:|---:|---:|
@@ -356,54 +363,53 @@ python -m jittor_controller_repro.controller_benchmark
 | train_step_sec_mean | 0.027974 | 0.022659 | 0.810 | 1.235x |
 | epoch_sec_mean | 0.249953 | 0.209275 | 0.837 | 1.194x |
 
-Interpretation:
+结论：
 
-- Jittor shows clear speedup in `evaluate_actions`.
-- End-to-end Controller-only epoch speedup on real cached LoCoMo trace is about `1.19x`.
-- Full MemSkill online training is dominated by API and LLM calls, so total wall-clock speedup is not expected to be large.
+- Jittor 在 `evaluate_actions` 阶段表现出明显优势；
+- 真实 LoCoMo cached trace 上，Controller-only 单 epoch 约 `1.19x`；
+- 端到端在线训练受 API 和 LLM 调用影响较大，因此整体加速不明显，优势主要体现在 Controller 局部计算。
 
-## 10. Implementation Notes
+## 12. 实现细节
 
-### 10.1 Dynamic SkillBank
+### 12.1 动态 SkillBank
 
-The number of candidate skills may change during training. The Jittor Controller therefore pads candidate skill embeddings to a regular batch tensor and uses masks to exclude padding positions from softmax and PPO probability computation.
+训练过程中 SkillBank 数量会变化。Jittor Controller 会将候选 skill embedding padding 成规则 batch tensor，并用 mask 避免 padding 位置参与 softmax 和 PPO 概率计算。
 
-### 10.2 Top-K Joint Probability
+### 12.2 Top-K 联合概率
 
-The selected Top-K skills form an ordered action. During PPO update, the controller recomputes the joint probability of the same selected skills under the new policy.
+Top-K skills 组成一个有顺序的动作。PPO 更新阶段需要在新策略下重新计算同一组 Top-K skills 的联合概率。
 
-The Jittor version rewrites part of the prefix probability computation with `jt.cumsum`, reducing Python-side iterative updates and keeping the probability path inside Jittor tensor computation.
+Jittor 版本将部分前缀概率计算改写为 `jt.cumsum`，减少 Python 循环，并让概率计算保持在 Jittor 张量化路径中。
 
-### 10.3 Why Executor and Designer Are Not Rewritten in Jittor
+### 12.3 为什么不把 Executor 和 Designer 改成 Jittor
 
-Executor and Designer are primarily LLM-driven modules:
+Executor 和 Designer 主要是 LLM 驱动：
 
-- Executor turns selected skills into concrete memory actions.
-- Designer analyzes hard cases and refines or proposes skills.
+- Executor 根据选中的 skill 生成具体 memory action；
+- Designer 根据 hard cases 反思并修改或新增 skill。
 
-They are not the main trainable neural network path. Therefore, this reproduction focuses on the Controller, while keeping Executor and Designer compatible with the original MemSkill workflow.
+这两个模块不是主要的可训练神经网络路径。因此，本次复现重点放在 Controller，而不是将所有流程都改写成 Jittor。
 
-## 11. Known Limitations
+## 13. 当前局限
 
-- The current experiments use small-scale LoCoMo settings due to limited API budget and GPU memory.
-- The results do not claim to reproduce the final large-scale paper metrics.
-- Online reward and memory actions are affected by LLM output randomness.
-- End-to-end speedup is limited by API calls and Executor/Designer latency.
-- The clearest acceleration evidence is in the Controller-only benchmark, especially `evaluate_actions`.
+- 当前实验使用 LoCoMo 小规模设置，受 API 成本和显存限制，没有复现论文最终大规模指标；
+- 在线训练结果会受到 LLM 输出、API 延迟和采样随机性的影响；
+- 端到端加速并不明显，性能优势主要体现在 Controller 局部计算；
+- README 中的曲线和日志用于说明功能对齐、训练信号和性能趋势，不应解读为 Jittor 版本全面优于 PyTorch。
 
-## 12. Submission Checklist
+## 14. 提交检查清单
 
-- [x] Environment configuration documented
-- [x] Data preparation documented
-- [x] Jittor training scripts documented
-- [x] PyTorch baseline scripts documented
-- [x] Test scripts documented
-- [x] Training logs documented
-- [x] Loss curve paths documented
-- [x] PyTorch/Jittor alignment results documented
-- [x] Performance logs documented
-- [x] Known limitations documented
+- [x] 环境配置说明
+- [x] 数据准备说明
+- [x] Jittor 训练脚本说明
+- [x] PyTorch baseline 脚本说明
+- [x] 测试脚本说明
+- [x] 训练日志说明
+- [x] loss 曲线展示
+- [x] PyTorch / Jittor 对齐结果
+- [x] 性能测试结果
+- [x] 当前局限说明
 
-## 13. Acknowledgement
+## 15. 致谢
 
-This repository is based on the original MemSkill implementation and adds a Jittor reproduction of the trainable Controller module for course/report submission.
+本仓库基于原 MemSkill 实现进行课程复现，重点补充 Jittor Controller、训练脚本、测试脚本、实验日志和可视化结果。
