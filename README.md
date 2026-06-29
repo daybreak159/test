@@ -2,6 +2,13 @@
 
 本仓库用于新芽计划第三阶段汇报：基于 **Jittor** 复现论文 **MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents** 中的可训练 Controller 模块，并将其接回原 MemSkill 的在线记忆构建流程。
 
+相关链接：
+
+- 原论文：[arXiv:2602.02474](https://arxiv.org/abs/2602.02474)
+- 论文 PDF：[MemSkill PDF](https://arxiv.org/pdf/2602.02474)
+- 原始代码：[ViktorAxelsen/MemSkill](https://github.com/ViktorAxelsen/MemSkill)
+- 项目主页：[viktoraxelsen.github.io/MemSkill](https://viktoraxelsen.github.io/MemSkill/)
+
 > 说明：本仓库重点复现的是 Controller 的神经网络与 PPO 训练路径。Executor 和 Designer 主要由 LLM 驱动，因此保留原 MemSkill 实现，通过 bridge 与 Jittor Controller 对接。
 
 ## 1. 复现范围
