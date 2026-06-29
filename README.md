@@ -158,18 +158,20 @@ jittor_controller_repro/runs/locomo_jittor_one_batch_debug/
 
 ### 6.2 Jittor 完整小规模训练
 
-为了避免长时间运行中断，完整训练按 outer epoch 分轮执行：
+正常情况下，可以直接运行完整小规模训练脚本：
+
+```bash
+./scripts/run_jittor_locomo_full_small_designer.sh
+```
+
+该脚本会在 LoCoMo 小规模数据上运行完整在线流程，包括 Controller 选择技能、Executor 更新 MemoryBank、reward 计算、PPO 更新以及 Designer evolution。
+
+如果计算资源或 API 稳定性有限，也可以按 outer epoch 分轮执行，便于中断后继续运行：
 
 ```bash
 ./scripts/run_jittor_locomo_next_outer_epoch.sh 1
 ./scripts/run_jittor_locomo_next_outer_epoch.sh 2
 ./scripts/run_jittor_locomo_next_outer_epoch.sh 3
-```
-
-底层脚本：
-
-```bash
-./scripts/run_jittor_locomo_full_small_designer.sh
 ```
 
 输出目录：
@@ -201,15 +203,15 @@ training_summary.md
 PyTorch baseline 使用原版 Controller，并尽量保持与 Jittor 版本一致的小规模设置：
 
 ```bash
+./scripts/run_torch_locomo_full_small_designer.sh
+```
+
+资源受限时，也可以使用分轮脚本：
+
+```bash
 ./scripts/run_torch_locomo_next_outer_epoch.sh 1
 ./scripts/run_torch_locomo_next_outer_epoch.sh 2
 ./scripts/run_torch_locomo_next_outer_epoch.sh 3
-```
-
-底层脚本：
-
-```bash
-./scripts/run_torch_locomo_full_small_designer.sh
 ```
 
 输出目录：
