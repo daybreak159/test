@@ -8,11 +8,13 @@
 
 MemSkill 整体包含三个核心模块：
 
-| 模块 | 原论文中的作用 | 本仓库复现情况 |
-|---|---|---|
-| Controller | 根据当前状态从 SkillBank 中选择 Top-K memory skills，并通过 PPO 学习选择策略 | 使用 Jittor 复现 |
-| Executor | 根据选中的 skills 调用 LLM 生成 memory actions，并更新 MemoryBank | 沿用原实现 |
-| Designer | 根据失败案例调用 LLM 分析并调整 SkillBank | 沿用原实现 |
+| 模块 | 原论文中的作用 |
+|---|---|
+| Controller | 根据当前状态从 SkillBank 中选择 Top-K memory skills，并通过 PPO 学习选择策略 |
+| Executor | 根据选中的 skills 调用 LLM 生成 memory actions，并更新 MemoryBank |
+| Designer | 根据失败案例调用 LLM 分析并调整 SkillBank |
+
+本仓库重点复现 Controller 的 Jittor 训练路径；Executor 和 Designer 仍沿用原 MemSkill 流程，并通过 bridge 与 Jittor Controller 对接。
 
 Jittor 版本实现内容包括：
 
