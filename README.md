@@ -21,7 +21,7 @@ MemSkill 整体包含三个核心模块：
 | Executor | 根据选中的 skills 调用 LLM 生成 memory actions，并更新 MemoryBank |
 | Designer | 根据失败案例调用 LLM 分析并调整 SkillBank |
 
-本仓库重点复现 Controller 的 Jittor 训练路径；Executor 和 Designer 仍沿用原 MemSkill 流程，并通过 bridge 与 Jittor Controller 对接。
+本仓库重点复现 Controller 的 Jittor 训练路径；Executor 和 Designer 仍沿用原 MemSkill 流程，并通过 bridge 与 Jittor Controller 对接。为了保证 PyTorch baseline 可以直接运行，仓库中也保留了原 MemSkill 的 `src/`、`main.py`、`prompts/`、`skills/` 等核心源码。
 
 Jittor 版本实现内容包括：
 
@@ -45,7 +45,7 @@ MemskillJittor/
 ├── README.md
 ├── requirements.txt
 ├── main.py
-├── src/
+├── src/                  # 原 MemSkill PyTorch baseline 核心源码
 │   ├── controller.py
 │   ├── trainer.py
 │   ├── executor.py
