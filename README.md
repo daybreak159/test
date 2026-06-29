@@ -294,6 +294,8 @@ python -m jittor_controller_repro.plot_logs \
 
 ## 9. 训练曲线与对齐结果
 
+受限于本机显存条件、在线 LLM API 调用耗时以及调用稳定性，本仓库未进行论文规模的大轮次训练，而是采用 LoCoMo 小规模数据完成有限轮次实验。实验重点放在验证 Jittor Controller 是否能够正确接入原 MemSkill 在线流程，并产生与 PyTorch baseline 同量级、同趋势的训练信号。结果表明，Jittor 版本可以完成技能选择、记忆更新、reward 计算、PPO 更新和 checkpoint 保存等关键步骤，能够支持复现链路的正确性验证。
+
 本仓库同时保留两类实验图：
 
 - **在线流程图**：来自真实 MemSkill 链路，包含 Controller、Executor、reward、PPO 更新和 Designer evolution，用于说明 Jittor Controller 已经接入完整训练闭环；
