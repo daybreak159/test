@@ -115,79 +115,6 @@ def plot_offline_loss(runs_root: Path, out_dir: Path) -> None:
         )
 
 
-def make_table_figure(title: str, rows: list[list[str]], columns: list[str], out: Path) -> None:
-    fig, ax = plt.subplots(figsize=(10.8, max(2.8, 0.55 * len(rows) + 1.2)))
-    ax.axis("off")
-    ax.set_title(title, fontsize=15, fontweight="bold", pad=16)
-    table = ax.table(cellText=rows, colLabels=columns, cellLoc="center", loc="center")
-    table.auto_set_font_size(False)
-    table.set_fontsize(10.5)
-    table.scale(1, 1.45)
-    for (r, c), cell in table.get_celld().items():
-        cell.set_edgecolor("#C9D4E5")
-        cell.set_linewidth(0.8)
-        if r == 0:
-            cell.set_facecolor("#EAF2FF")
-            cell.set_text_props(weight="bold", color="#1F3B64")
-        elif c == 0:
-            cell.set_facecolor("#F7FAFC")
-            cell.set_text_props(weight="bold")
-        else:
-            cell.set_facecolor("white")
-    save(fig, out)
-
-
-def plot_alignment_tables(runs_root: Path, out_dir: Path) -> None:
-    summary = read_json(runs_root / "compare_jittor_torch_full_small_epoch1_20260624" / "derived" / "summary.json")
-    rows = []
-    for key, name in [("jittor", "Jittor"), ("torch", "PyTorch")]:
-        s = summary[key]
-        rows.append(
-            [
-                name,
-                f"{s['metric_rows']}",
-                f"{s['rewards_mean']:.4f}",
-                f"{s['rewards_last']:.4f}",
-                f"{s['trace_records']}",
-                f"{len(s['checkpoints'])}",
-                ", ".join(s.get("designer_added", [])) or "-",
-            ]
-        )
-    make_table_figure(
-        "在线完整流程对齐：两种后端均完成真实闭环",
-        rows,
-        ["后端", "inner epochs", "平均 reward", "最终 reward", "trace records", "checkpoint", "Designer 新增 skill"],
-        out_dir / "online_alignment_summary.png",
-    )
-
-    offline = pd.read_csv(runs_root / "offline_paper_style_loss_20260625" / "offline_loss_comparison.csv")
-    last = offline.iloc[-1]
-    rows = [
-        [
-            "Jittor",
-            f"{len(offline)}",
-            f"{last['jittor_value_loss']:.6f}",
-            f"{last['jittor_policy_loss']:.6f}",
-            f"{last['jittor_explained_variance']:.3f}",
-            f"{last['jittor_clip_frac']:.3f}",
-        ],
-        [
-            "PyTorch",
-            f"{len(offline)}",
-            f"{last['torch_value_loss']:.6f}",
-            f"{last['torch_policy_loss']:.6f}",
-            f"{last['torch_explained_variance']:.3f}",
-            f"{last['torch_clip_frac']:.3f}",
-        ],
-    ]
-    make_table_figure(
-        "离线缓存对齐：固定 trace 下核心 PPO 指标同量级",
-        rows,
-        ["后端", "epochs", "最终 Value Loss", "最终 Policy Loss", "最终 Value 拟合度", "最终 Clip Frac"],
-        out_dir / "offline_alignment_summary.png",
-    )
-
-
 def normalize_op(value: object) -> str | None:
     if value is None:
         return None
@@ -313,7 +240,6 @@ def main() -> None:
     configure_matplotlib()
     plot_online_loss(args.runs_root, args.out_dir)
     plot_offline_loss(args.runs_root, args.out_dir)
-    plot_alignment_tables(args.runs_root, args.out_dir)
     plot_offline_distributions(args.runs_root, args.out_dir)
     plot_benchmark(args.runs_root, args.out_dir)
 

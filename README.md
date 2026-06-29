@@ -303,10 +303,6 @@ python -m jittor_controller_repro.plot_logs \
 
 ![online policy loss curve](assets/figures/online_policy_loss_curve.png)
 
-在线流程的汇总记录如下：
-
-![online alignment summary](assets/figures/online_alignment_summary.png)
-
 在线训练中 Executor 和 Designer 涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不应被解读为逐点严格一致。这里重点验证的是：真实 LoCoMo 输入可以经过技能选择、记忆更新、reward 计算和 PPO 更新，形成完整训练闭环。
 
 ### 9.2 离线缓存：固定 trace 下的训练对齐
@@ -324,10 +320,6 @@ python -m jittor_controller_repro.plot_logs \
 离线 PPO 总目标曲线：
 
 ![offline ppo objective loss curve](assets/figures/offline_ppo_objective_loss_curve.png)
-
-离线缓存的最终指标如下：
-
-![offline alignment summary](assets/figures/offline_alignment_summary.png)
 
 这组结果说明：在固定输入轨迹下，Jittor Controller 的 Value Loss、Policy Loss 和 Value 拟合度与 PyTorch baseline 保持同量级，并呈现相近的训练变化趋势。
 
