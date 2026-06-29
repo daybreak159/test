@@ -157,35 +157,54 @@ def collect_distribution(trace_path: Path) -> tuple[Counter, Counter]:
     return skills, actions
 
 
-def plot_counter(counter: Counter, title: str, xlabel: str, out: Path, top_n: int = 10) -> None:
-    items = counter.most_common(top_n)
-    labels = [x[0] for x in items][::-1]
-    values = [x[1] for x in items][::-1]
-    fig, ax = plt.subplots(figsize=(9.5, max(3.0, 0.45 * len(labels) + 1.1)))
-    bars = ax.barh(labels, values, color=BLUE)
+def plot_distribution_compare(
+    jittor_counter: Counter,
+    torch_counter: Counter,
+    title: str,
+    out: Path,
+    preferred_order: list[str],
+) -> None:
+    labels = [label for label in preferred_order if jittor_counter.get(label, 0) or torch_counter.get(label, 0)]
+    rest = sorted((set(jittor_counter) | set(torch_counter)) - set(labels))
+    labels.extend(rest)
+    labels = labels[::-1]
+    j_total = sum(jittor_counter.values()) or 1
+    t_total = sum(torch_counter.values()) or 1
+    j_values = [jittor_counter.get(label, 0) / j_total * 100 for label in labels]
+    t_values = [torch_counter.get(label, 0) / t_total * 100 for label in labels]
+
+    fig, ax = plt.subplots(figsize=(9.8, max(3.4, 0.5 * len(labels) + 1.2)))
+    y = list(range(len(labels)))
+    height = 0.36
+    ax.barh([i + height / 2 for i in y], j_values, height=height, color=BLUE, label=f"Jittor (n={j_total})")
+    ax.barh([i - height / 2 for i in y], t_values, height=height, color=ORANGE, label=f"PyTorch (n={t_total})")
+    ax.set_yticks(y, labels)
     ax.set_title(title, fontsize=15, fontweight="bold", pad=14)
-    ax.set_xlabel(xlabel)
+    ax.set_xlabel("占比 (%)")
     ax.grid(axis="x", color=GRID, linewidth=0.7, alpha=0.8)
+    ax.legend(frameon=False, loc="lower right")
     ax.spines[["top", "right"]].set_visible(False)
-    for bar, value in zip(bars, values):
-        ax.text(bar.get_width() + max(values) * 0.015, bar.get_y() + bar.get_height() / 2, str(value), va="center", fontsize=10)
     save(fig, out)
 
 
 def plot_offline_distributions(runs_root: Path, out_dir: Path) -> None:
-    trace = runs_root / "full-flow-jittor-evolve2" / "step_records.jsonl"
-    skills, actions = collect_distribution(trace)
-    plot_counter(
-        skills,
-        "缓存 trace 中的 Controller 技能选择分布",
-        "选择次数",
+    j_trace = runs_root / "full-flow-jittor-evolve2" / "step_records.jsonl"
+    t_trace = runs_root / "full_compare" / "torch_fixed_skill" / "controller_trace_records.jsonl"
+    j_skills, j_actions = collect_distribution(j_trace)
+    t_skills, t_actions = collect_distribution(t_trace)
+    plot_distribution_compare(
+        j_skills,
+        t_skills,
+        "缓存 trace 中的 Controller 技能选择分布对比",
         out_dir / "offline_selected_skill_distribution.png",
+        ["insert", "update", "delete", "noop"],
     )
-    plot_counter(
-        actions,
-        "缓存 trace 中的 Executor memory action 分布",
-        "执行次数",
+    plot_distribution_compare(
+        j_actions,
+        t_actions,
+        "缓存 trace 中的 Executor memory action 分布对比",
         out_dir / "offline_memory_action_distribution.png",
+        ["insert", "update", "delete", "noop"],
     )
 
 

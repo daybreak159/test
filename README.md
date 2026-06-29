@@ -325,17 +325,17 @@ python -m jittor_controller_repro.plot_logs \
 
 ## 10. 行为分布可视化
 
-行为分布图使用 cached trace 记录生成，不重新调用 LLM API。它用于观察 Controller 是否只选择单一 skill，以及 Executor 是否能产生多类 memory actions。
+行为分布图使用 PyTorch / Jittor 的 cached trace 记录生成，不重新调用 LLM API。由于两边 trace 记录数量不同，这里使用占比而不是原始次数，重点观察两种实现的行为分布是否处于相近范围。
 
-Controller 技能选择分布：
+Controller 技能选择分布对比：
 
 ![offline selected skill distribution](assets/figures/offline_selected_skill_distribution.png)
 
-Executor memory action 分布：
+Executor memory action 分布对比：
 
 ![offline memory action distribution](assets/figures/offline_memory_action_distribution.png)
 
-可以看到，Controller 会在基础技能和 Designer 产生的新技能之间进行选择；Executor 输出仍以 insert / update 为主，少量出现 delete / noop，符合 MemoryBank 构建任务的常见操作分布。
+可以看到，Controller 会在多种候选 skill 之间进行选择；Executor 输出仍以 insert / update 为主，少量出现 delete / noop，符合 MemoryBank 构建任务的常见操作分布。
 
 ## 11. Controller-only 性能测试
 
