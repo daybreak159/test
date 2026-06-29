@@ -1,0 +1,34 @@
+{
+  "jittor": {
+    "source": "full-flow-jittor-evolve2/step_records.jsonl",
+    "trace_records": 76,
+    "selected_skills": {
+      "insert": 40,
+      "delete": 44,
+      "noop": 53,
+      "update": 47,
+      "insert_activity_participation_inventory": 20,
+      "update_activity_participation_inventory": 24
+    },
+    "memory_actions": {
+      "insert": 214,
+      "update": 83,
+      "noop": 5
+    }
+  },
+  "torch": {
+    "source": "full_compare/torch_fixed_skill/controller_trace_records.jsonl",
+    "trace_records": 228,
+    "selected_skills": {
+      "update": 167,
+      "delete": 178,
+      "insert": 178,
+      "noop": 161
+    },
+    "memory_actions": {
+      "insert": 1222,
+      "update": 746,
+      "delete": 10
+    }
+  }
+}

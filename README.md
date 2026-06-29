@@ -43,6 +43,7 @@ Jittor 版本实现内容包括：
 ```text
 MemskillJittor/
 ├── README.md
+├── requirements.txt
 ├── main.py
 ├── src/
 │   ├── controller.py
@@ -60,13 +61,17 @@ MemskillJittor/
 │   ├── train_torch.py
 │   ├── controller_benchmark.py
 │   ├── plot_logs.py
-│   └── runs/
+│   └── runs/                 # curated metrics used by README figures
+├── prompts/
+├── skills/
 ├── scripts/
 │   ├── run_jittor_one_batch_debug.sh
 │   ├── run_jittor_locomo_full_small_designer.sh
 │   ├── run_jittor_locomo_next_outer_epoch.sh
 │   ├── run_torch_locomo_full_small_designer.sh
-│   └── run_torch_locomo_next_outer_epoch.sh
+│   ├── run_torch_locomo_next_outer_epoch.sh
+│   ├── setup_env.sh
+│   └── generate_readme_figures.py
 ├── data/
 │   ├── locomo10.json
 │   └── locomo10_one.json

@@ -188,10 +188,18 @@ def plot_distribution_compare(
 
 
 def plot_offline_distributions(runs_root: Path, out_dir: Path) -> None:
-    j_trace = runs_root / "full-flow-jittor-evolve2" / "step_records.jsonl"
-    t_trace = runs_root / "full_compare" / "torch_fixed_skill" / "controller_trace_records.jsonl"
-    j_skills, j_actions = collect_distribution(j_trace)
-    t_skills, t_actions = collect_distribution(t_trace)
+    summary_path = runs_root / "behavior_distribution_summary" / "behavior_distribution_summary.json"
+    if summary_path.exists():
+        summary = read_json(summary_path)
+        j_skills = Counter(summary["jittor"]["selected_skills"])
+        j_actions = Counter(summary["jittor"]["memory_actions"])
+        t_skills = Counter(summary["torch"]["selected_skills"])
+        t_actions = Counter(summary["torch"]["memory_actions"])
+    else:
+        j_trace = runs_root / "full-flow-jittor-evolve2" / "step_records.jsonl"
+        t_trace = runs_root / "full_compare" / "torch_fixed_skill" / "controller_trace_records.jsonl"
+        j_skills, j_actions = collect_distribution(j_trace)
+        t_skills, t_actions = collect_distribution(t_trace)
     plot_distribution_compare(
         j_skills,
         t_skills,
