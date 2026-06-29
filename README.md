@@ -329,11 +329,11 @@ python -m jittor_controller_repro.plot_logs \
 
 Controller 技能选择分布对比：
 
-![offline selected skill distribution](assets/figures/offline_selected_skill_distribution.png)
+![offline selected skill distribution compare](assets/figures/offline_selected_skill_distribution_compare.png)
 
 Executor memory action 分布对比：
 
-![offline memory action distribution](assets/figures/offline_memory_action_distribution.png)
+![offline memory action distribution compare](assets/figures/offline_memory_action_distribution_compare.png)
 
 可以看到，Controller 会在多种候选 skill 之间进行选择；Executor 输出仍以 insert / update 为主，少量出现 delete / noop，符合 MemoryBank 构建任务的常见操作分布。
 

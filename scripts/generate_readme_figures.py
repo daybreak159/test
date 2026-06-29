@@ -196,14 +196,14 @@ def plot_offline_distributions(runs_root: Path, out_dir: Path) -> None:
         j_skills,
         t_skills,
         "缓存 trace 中的 Controller 技能选择分布对比",
-        out_dir / "offline_selected_skill_distribution.png",
+        out_dir / "offline_selected_skill_distribution_compare.png",
         ["insert", "update", "delete", "noop"],
     )
     plot_distribution_compare(
         j_actions,
         t_actions,
         "缓存 trace 中的 Executor memory action 分布对比",
-        out_dir / "offline_memory_action_distribution.png",
+        out_dir / "offline_memory_action_distribution_compare.png",
         ["insert", "update", "delete", "noop"],
     )
 
