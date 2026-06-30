@@ -447,43 +447,33 @@ jittor_controller_repro/runs/online_20epoch_alignment/metrics.csv
 
 20 epoch 在线流程对齐曲线：
 
-```text
-jittor_controller_repro/runs/online_20epoch_alignment/reward_alignment.png
-jittor_controller_repro/runs/online_20epoch_alignment/value_loss_alignment.png
-jittor_controller_repro/runs/online_20epoch_alignment/policy_loss_alignment.png
-```
+![20 epoch online reward alignment](assets/figures/online_20epoch_reward_alignment.png)
+
+![20 epoch online value loss alignment](assets/figures/online_20epoch_value_loss_alignment.png)
+
+![20 epoch online policy loss alignment](assets/figures/online_20epoch_policy_loss_alignment.png)
 
 Jittor 单后端在线训练曲线：
 
-```text
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/reward_curve.png
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/policy_loss_curve.png
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/value_loss_curve.png
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/entropy_curve.png
-```
+![online reward curve](assets/figures/online_reward_curve.png)
+
+![online value loss curve](assets/figures/online_value_loss_curve.png)
+
+![online policy loss curve](assets/figures/online_policy_loss_curve.png)
 
 训练过程可视化：
 
-```text
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/selected_skill_stats.png
-jittor_controller_repro/runs/locomo_jittor_full_small_designer_epochwise/memory_action_stats.png
-```
+![offline selected skill distribution compare](assets/figures/offline_selected_skill_distribution_compare.png)
+
+![offline memory action distribution compare](assets/figures/offline_memory_action_distribution_compare.png)
 
 离线 loss 曲线：
 
-```text
-jittor_controller_repro/runs/total_loss_curve.png
-jittor_controller_repro/runs/value_loss_curve.png
-```
+![offline value loss curve](assets/figures/offline_value_loss_curve.png)
 
-在线训练阶段历史曲线：
+![offline policy loss curve](assets/figures/offline_policy_loss_curve.png)
 
-```text
-jittor_controller_repro/runs/online_reward_curve.png
-jittor_controller_repro/runs/online_policy_loss_curve.png
-jittor_controller_repro/runs/online_value_loss_curve.png
-jittor_controller_repro/runs/online_entropy_curve.png
-```
+![offline ppo objective loss curve](assets/figures/offline_ppo_objective_loss_curve.png)
 
 ## 性能 Log
 
@@ -506,6 +496,14 @@ jittor_controller_repro/runs/controller_benchmark_summary.md
 jittor_controller_repro/runs/controller_benchmark_locomo_real_gpu/
 jittor_controller_repro/runs/controller_benchmark_synthetic_fullbatch_gpu/
 ```
+
+Controller-only 分阶段耗时：
+
+![controller benchmark timing](assets/figures/controller_benchmark_timing.png)
+
+Controller-only Jittor 相对速度：
+
+![controller benchmark speedup](assets/figures/controller_benchmark_speedup.png)
 
 真实 LoCoMo cached trace 结果：
 
