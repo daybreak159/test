@@ -174,7 +174,13 @@ export WANDB_MODE=offline
 python scripts/prepare_datasets.py --dataset all
 ```
 
-如果已经从官方来源下载了原始数据，可以用 `--*-source` 指定本地文件；如果有可直连 URL，也可以用 `--*-url`：
+默认情况下，脚本会尝试从公开入口下载可直连的数据集：LoCoMo10、LongMemEval-cleaned 和 HotpotQA；ALFWorld 使用官方 `alfworld-download` 命令准备环境数据。如果只想准备本次实验使用的 LoCoMo10，可以运行：
+
+```bash
+python scripts/prepare_datasets.py --dataset locomo
+```
+
+如果已经从官方来源下载了原始数据，可以用 `--*-source` 指定本地文件；如果需要替换下载地址，也可以用 `--*-url`：
 
 ```bash
 python scripts/prepare_datasets.py \
@@ -187,7 +193,7 @@ python scripts/prepare_datasets.py \
   --hotpotqa-eval-source /path/to/eval_200.json
 ```
 
-说明：部分数据集需要从官方页面或 HuggingFace 手动下载/授权访问，脚本不会提交或内置这些大规模原始数据，只负责将其整理到本项目约定路径并做轻量格式检查。
+说明：脚本不会提交或内置大规模原始数据，只负责下载/复制到本项目约定路径并做轻量格式检查。部分数据集文件较大，`--dataset all` 的下载时间取决于网络环境；如果不希望自动触发 ALFWorld 官方下载，可加 `--no-alfworld-download`。
 
 本次 Jittor 复现实验实际使用 LoCoMo10 子集：
 

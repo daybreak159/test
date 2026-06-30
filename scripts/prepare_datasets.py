@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
@@ -23,6 +24,13 @@ from typing import Any
 
 
 DEFAULT_DATA_DIR = Path("data")
+
+DEFAULT_URLS = {
+    "locomo": "https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json",
+    "longmemeval": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json",
+    "hotpotqa_train": "http://curtis.ml.cmu.edu/datasets/hotpot/hotpot_train_v1.1.json",
+    "hotpotqa_eval": "http://curtis.ml.cmu.edu/datasets/hotpot/hotpot_dev_distractor_v1.json",
+}
 
 
 def read_json_or_jsonl(path: Path) -> Any:
@@ -51,10 +59,14 @@ def copy_or_download(source: str | None, url: str | None, target: Path) -> bool:
             raise FileNotFoundError(f"source file not found: {src}")
         shutil.copyfile(src, target)
         return True
+    if target.exists():
+        print(f"[data] found {target}")
+        return True
     if url:
+        print(f"[download] {url} -> {target}")
         urllib.request.urlretrieve(url, target)
         return True
-    return target.exists()
+    return False
 
 
 def require_list(data: Any, name: str) -> list[Any]:
@@ -66,7 +78,8 @@ def require_list(data: Any, name: str) -> list[Any]:
 def prepare_locomo(args: argparse.Namespace) -> None:
     out_dir = Path(args.data_dir)
     raw_path = out_dir / "locomo.json"
-    has_raw = copy_or_download(args.locomo_source, args.locomo_url, raw_path)
+    locomo_url = args.locomo_url or DEFAULT_URLS["locomo"]
+    has_raw = copy_or_download(args.locomo_source, locomo_url, raw_path)
 
     if has_raw:
         raw = require_list(read_json_or_jsonl(raw_path), "LoCoMo")
@@ -95,7 +108,8 @@ def prepare_locomo(args: argparse.Namespace) -> None:
 def prepare_longmemeval(args: argparse.Namespace) -> None:
     out_dir = Path(args.data_dir)
     target = out_dir / "longmemeval_s.json"
-    has_data = copy_or_download(args.longmemeval_source, args.longmemeval_url, target)
+    longmemeval_url = args.longmemeval_url or DEFAULT_URLS["longmemeval"]
+    has_data = copy_or_download(args.longmemeval_source, longmemeval_url, target)
 
     if not has_data:
         print(
@@ -123,13 +137,46 @@ def prepare_longmemeval(args: argparse.Namespace) -> None:
         print(f"[longmemeval] found split file {split_path}")
 
 
+
+def convert_hotpotqa_item(item: dict[str, Any], index: int) -> dict[str, Any]:
+    if "input" in item and "context" in item and "answers" in item:
+        return item
+    parts = []
+    for para in item.get("context", []):
+        if isinstance(para, list) and len(para) >= 2:
+            title, sentences = para[0], para[1]
+            if isinstance(sentences, list):
+                parts.append(f"{title}: " + " ".join(str(s) for s in sentences))
+    answer = item.get("answer", "")
+    return {
+        "index": item.get("_id", index),
+        "input": item.get("question", ""),
+        "answers": [answer] if isinstance(answer, str) else answer,
+        "context": "\n".join(parts),
+        "supporting_facts": item.get("supporting_facts", []),
+    }
+
+
+def convert_hotpotqa_file(path: Path, out_path: Path) -> None:
+    data = require_list(read_json_or_jsonl(path), "HotpotQA")
+    converted = [convert_hotpotqa_item(item, idx) for idx, item in enumerate(data)]
+    write_json(out_path, converted)
+
+
 def prepare_hotpotqa(args: argparse.Namespace) -> None:
     out_dir = Path(args.data_dir)
     train_target = out_dir / "hotpotqa_train.json"
     eval_target = out_dir / "eval_200.json"
 
-    train_ok = copy_or_download(args.hotpotqa_source, args.hotpotqa_url, train_target)
-    eval_ok = copy_or_download(args.hotpotqa_eval_source, args.hotpotqa_eval_url, eval_target)
+    train_url = args.hotpotqa_url or DEFAULT_URLS["hotpotqa_train"]
+    eval_url = args.hotpotqa_eval_url or DEFAULT_URLS["hotpotqa_eval"]
+    train_ok = copy_or_download(args.hotpotqa_source, train_url, train_target)
+    eval_ok = copy_or_download(args.hotpotqa_eval_source, eval_url, eval_target)
+
+    if train_ok:
+        convert_hotpotqa_file(train_target, train_target)
+    if eval_ok:
+        convert_hotpotqa_file(eval_target, eval_target)
 
     if not train_ok:
         print(
@@ -157,6 +204,13 @@ def prepare_alfworld(args: argparse.Namespace) -> None:
 
     train_ok = copy_or_download(args.alfworld_source, args.alfworld_url, train_target)
     eval_ok = copy_or_download(args.alfworld_eval_source, args.alfworld_eval_url, eval_target)
+
+    if not train_ok and not eval_ok and args.alfworld_download:
+        if shutil.which("alfworld-download") is None:
+            print("[alfworld] alfworld-download not found. Install with: pip install 'alfworld[full]'")
+        else:
+            subprocess.run(["alfworld-download"], check=True)
+            print("[alfworld] downloaded official ALFWorld game files to the default ALFWorld cache")
 
     if not train_ok:
         print(
@@ -205,6 +259,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--alfworld-url")
     parser.add_argument("--alfworld-eval-source")
     parser.add_argument("--alfworld-eval-url")
+    parser.add_argument("--no-alfworld-download", action="store_false", dest="alfworld_download", help="Do not run alfworld-download automatically.")
+    parser.set_defaults(alfworld_download=True)
     return parser.parse_args()
 
 
