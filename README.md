@@ -350,7 +350,7 @@ python -m jittor_controller_repro.plot_logs \
 原始数据保存于：
 
 ```text
-jittor_controller_repro/runs/online_20epoch_alignment/metrics.csv
+runs/online_20epoch_alignment/metrics.csv
 ```
 
 #### 在线流程汇总
