@@ -472,6 +472,5 @@ python -m jittor_controller_repro.controller_benchmark
 
 - 当前实验使用 LoCoMo 小规模设置，受 API 成本和显存限制，没有复现论文最终大规模指标；
 - 在线训练结果会受到 LLM 输出、API 延迟和采样随机性的影响；
-- Designer 在线演化出的 skill 可能不同，例如本次 Jittor 生成 `capture_participation_event`，PyTorch 生成 `capture_visual_details`，因此完整流程 QA 分数不应被解读为严格同 SkillBank 对齐结果；
-- 端到端加速并不明显，性能优势主要体现在 Controller 局部计算；
-- README 中的曲线和日志用于说明功能对齐、训练信号和性能趋势，不应解读为 Jittor 版本全面优于 PyTorch。
+- Designer 在线演化出的 skill 可能不同，结果存在一定波动；
+- 端到端加速并不明显，性能优势主要体现在 Controller 局部计算。
