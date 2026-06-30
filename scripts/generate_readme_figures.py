@@ -176,8 +176,8 @@ def plot_distribution_compare(
     fig, ax = plt.subplots(figsize=(9.8, max(3.4, 0.5 * len(labels) + 1.2)))
     y = list(range(len(labels)))
     height = 0.36
-    ax.barh([i + height / 2 for i in y], j_values, height=height, color=BLUE, label=f"Jittor (n={j_total})")
-    ax.barh([i - height / 2 for i in y], t_values, height=height, color=ORANGE, label=f"PyTorch (n={t_total})")
+    ax.barh([i + height / 2 for i in y], j_values, height=height, color=BLUE, label="Jittor")
+    ax.barh([i - height / 2 for i in y], t_values, height=height, color=ORANGE, label="PyTorch")
     ax.set_yticks(y, labels)
     ax.set_title(title, fontsize=15, fontweight="bold", pad=14)
     ax.set_xlabel("占比 (%)")
@@ -200,6 +200,9 @@ def plot_offline_distributions(runs_root: Path, out_dir: Path) -> None:
         t_trace = runs_root / "full_compare" / "torch_fixed_skill" / "controller_trace_records.jsonl"
         j_skills, j_actions = collect_distribution(j_trace)
         t_skills, t_actions = collect_distribution(t_trace)
+    for skill in ("insert_activity_participation_inventory", "update_activity_participation_inventory"):
+        j_skills.pop(skill, None)
+        t_skills.pop(skill, None)
     plot_distribution_compare(
         j_skills,
         t_skills,

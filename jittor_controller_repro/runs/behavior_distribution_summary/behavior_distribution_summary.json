@@ -6,9 +6,7 @@
       "insert": 40,
       "delete": 44,
       "noop": 53,
-      "update": 47,
-      "insert_activity_participation_inventory": 20,
-      "update_activity_participation_inventory": 24
+      "update": 47
     },
     "memory_actions": {
       "insert": 214,
