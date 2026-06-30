@@ -2,10 +2,13 @@
 
 本仓库用于新芽计划第三阶段汇报：基于 **Jittor** 复现论文 **MemSkill: Learning and Evolving Memory Skills for Self-Evolving Agents** 中的可训练 Controller 模块，并将其接回原 MemSkill 的在线记忆构建流程。
 
+Jittor 是清华大学开源的深度学习框架，采用即时编译和元算子机制，支持类似 PyTorch 的动态图开发方式，并面向国产深度学习框架生态提供高性能训练与推理能力。
+
 相关链接：
 
 - 原论文：[arXiv:2602.02474](https://arxiv.org/abs/2602.02474)
 - 论文 PDF：[MemSkill PDF](https://arxiv.org/pdf/2602.02474)
+- Jittor 框架：[Jittor GitHub](https://github.com/Jittor/jittor)
 - 原始代码：[ViktorAxelsen/MemSkill](https://github.com/ViktorAxelsen/MemSkill)
 - 项目主页：[viktoraxelsen.github.io/MemSkill](https://viktoraxelsen.github.io/MemSkill/)
 
