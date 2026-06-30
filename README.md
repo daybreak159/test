@@ -159,7 +159,37 @@ export WANDB_MODE=offline
 
 ## 5. 数据准备
 
-小规模在线训练使用 LoCoMo 数据：
+原论文代码支持多组数据，本仓库保留了对应的数据处理入口：
+
+| Dataset | 代码参数 | 默认本地文件 |
+|---|---|---|
+| LoCoMo | `--dataset locomo` | `data/locomo10.json` |
+| LongMemEval | `--dataset longmemeval` | `data/longmemeval_s.json` + `data/longmemeval_s_splits.json` |
+| HotpotQA | `--dataset hotpotqa` | `data/hotpotqa_train.json` + `data/eval_200.json` |
+| ALFWorld | `--dataset alfworld` | `data/alfworld_train_offline.json` + `data/alfworld_expert_eval_in_distribution.json` |
+
+数据准备脚本：
+
+```bash
+python scripts/prepare_datasets.py --dataset all
+```
+
+如果已经从官方来源下载了原始数据，可以用 `--*-source` 指定本地文件；如果有可直连 URL，也可以用 `--*-url`：
+
+```bash
+python scripts/prepare_datasets.py \
+  --dataset locomo \
+  --locomo-source /path/to/locomo.json
+
+python scripts/prepare_datasets.py \
+  --dataset hotpotqa \
+  --hotpotqa-source /path/to/hotpotqa_train.json \
+  --hotpotqa-eval-source /path/to/eval_200.json
+```
+
+说明：部分数据集需要从官方页面或 HuggingFace 手动下载/授权访问，脚本不会提交或内置这些大规模原始数据，只负责将其整理到本项目约定路径并做轻量格式检查。
+
+本次 Jittor 复现实验实际使用 LoCoMo10 子集：
 
 ```text
 data/locomo10.json
@@ -169,7 +199,8 @@ data/locomo10_one.json
 其中：
 
 - `locomo10_one.json` 用于快速调试；
-- `locomo10.json` 用于小规模完整流程训练。
+- `locomo10.json` 用于小规模完整流程训练；
+- LoCoMo10 按代码中的官方复现设置划分为 train / validation / test = `6 / 2 / 2`。
 
 本项目受 API 调用成本和显存限制，目标是验证 Jittor Controller 可以跑通完整训练闭环，并与 PyTorch 原流程在训练记录和行为分布上保持相近，而不是复现论文最终大规模指标。
 
