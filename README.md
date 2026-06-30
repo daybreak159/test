@@ -330,13 +330,9 @@ jittor_controller_repro/runs/online_20epoch_alignment/metrics.csv
 - `Policy Loss` 来自 PPO 的策略目标，不是普通监督学习误差；出现负值是正常现象，重点观察数量级和稳定性。
 - 在线 API、LLM 输出、随机采样和 Designer 演化会带来差异，因此该实验用于证明闭环可运行和训练信号同量级，不用于声称逐数值完全一致。
 
-在线 Reward 对齐曲线：
-
-![20 epoch online reward alignment](assets/figures/online_20epoch_reward_alignment.png)
-
-在线 Value Loss 对齐曲线：
-
-![20 epoch online value loss alignment](assets/figures/online_20epoch_value_loss_alignment.png)
+| 在线 Reward 对齐曲线 | 在线 Value Loss 对齐曲线 |
+|---|---|
+| ![20 epoch online reward alignment](assets/figures/online_20epoch_reward_alignment.png) | ![20 epoch online value loss alignment](assets/figures/online_20epoch_value_loss_alignment.png) |
 
 在线训练中 Executor 和 Designer 涉及 LLM 调用，因此 reward、memory action 数量和 loss 曲线不应被解读为逐点严格一致。这里重点验证的是：真实 LoCoMo 输入可以经过技能选择、记忆更新、reward 计算和 PPO 更新，形成完整训练闭环。
 
@@ -372,17 +368,9 @@ Judge 模型: gpt-5.5
 
 下图使用相同 cached trace 分别训练 PyTorch 与 Jittor Controller。相比在线流程，离线缓存更适合展示 loss 下降趋势和后端对齐情况。
 
-离线 Value Loss 曲线：
-
-![offline value loss curve](assets/figures/offline_value_loss_curve.png)
-
-离线 Policy Loss 曲线：
-
-![offline policy loss curve](assets/figures/offline_policy_loss_curve.png)
-
-离线 PPO 总目标曲线：
-
-![offline ppo objective loss curve](assets/figures/offline_ppo_objective_loss_curve.png)
+| 离线 Value Loss 曲线 | 离线 Policy Loss 曲线 | 离线 PPO 总目标曲线 |
+|---|---|---|
+| ![offline value loss curve](assets/figures/offline_value_loss_curve.png) | ![offline policy loss curve](assets/figures/offline_policy_loss_curve.png) | ![offline ppo objective loss curve](assets/figures/offline_ppo_objective_loss_curve.png) |
 
 这组结果说明：在固定输入轨迹下，Jittor Controller 的 Value Loss、Policy Loss 和 Value 拟合度与 PyTorch baseline 保持同量级，并呈现相近的训练变化趋势。
 
@@ -425,13 +413,9 @@ python -m jittor_controller_repro.controller_benchmark
 
 下图展示真实 LoCoMo cached trace 上的 Controller-only benchmark。第一张图比较各阶段耗时，第二张图展示 `PyTorch / Jittor` speedup。
 
-Controller-only 分阶段耗时：
-
-![controller benchmark timing](assets/figures/controller_benchmark_timing.png)
-
-Controller-only Jittor 相对速度：
-
-![controller benchmark speedup](assets/figures/controller_benchmark_speedup.png)
+| Controller-only 分阶段耗时 | Controller-only Jittor 相对速度 |
+|---|---|
+| ![controller benchmark timing](assets/figures/controller_benchmark_timing.png) | ![controller benchmark speedup](assets/figures/controller_benchmark_speedup.png) |
 
 | Metric | PyTorch | Jittor | Jittor / PyTorch | Speedup |
 |---|---:|---:|---:|---:|
